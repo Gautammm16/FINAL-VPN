@@ -141,63 +141,206 @@
       margin-top: 5px;
       font-style: italic;
     }
+    
+    /* Ad Blocker Styles */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 30px;
+      margin-right: 10px;
+    }
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 30px;
+    }
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .switch-slider {
+      background-color: #4CAF50;
+    }
+    input:checked + .switch-slider:before {
+      transform: translateX(30px);
+    }
+    .toggle-label {
+      display: inline-block;
+      vertical-align: middle;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .adblock-stats {
+      background-color: #f2f2f2;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .stats-number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4CAF50;
+    }
+    .stats-label {
+      color: #666;
+      font-size: 14px;
+    }
+    .update-filters {
+      padding: 8px 15px;
+      background-color: #2196F3;
+      margin-left: 10px;
+    }
+    .reset-stats {
+      padding: 8px 15px;
+      background-color: #ff9800;
+      margin-left: 10px;
+    }
+    .tab-container {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .tab-buttons {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 10px;
+    }
+    .tab-button {
+      padding: 10px 20px;
+      cursor: pointer;
+      background-color: #f2f2f2;
+      border: 1px solid #ddd;
+      border-bottom: none;
+      margin-right: 5px;
+      border-radius: 5px 5px 0 0;
+    }
+    .tab-button.active {
+      background-color: #fff;
+      border-bottom: 1px solid #fff;
+      margin-bottom: -1px;
+      font-weight: bold;
+    }
+    .tab-content {
+      display: none;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 5px 5px;
+    }
+    .tab-content.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
-<h1><img src="icons/icon32.png" alt="VPN Icon" style="width: 24px;position: relative;top: 4px;"> Proxy Manager</h1>
+<h1><img src="icons/icon32.png" alt="VPN Icon" style="width: 24px;position: relative;top: 4px;"> Proxy & Ad Blocker</h1>
   <p class="promo">
     Get <a href="https://www.webshare.io/?referral_code=cqjv56e3hysl" target="_blank">10 free proxies</a> to add to the extension
   </p>
 
-  <h2>Proxy Settings</h2>
-  
-  <div class="section">
-    <h3>Proxy List</h3>	
-    <div class="format-info">
-      <p>Two formats are supported:</p>
-      <p>1. Standard format: <span class="format-example">host:port:username:password</span></p>
-      <p>2. With type specified: <span class="format-example">type:host:port:username:password</span></p>
-      <p class="note">Type can be 'http' or 'socks5'. If not specified, type will be detected automatically.</p>
+  <div class="tab-container">
+    <div class="tab-buttons">
+      <div class="tab-button active" data-tab="proxy">VPN Settings</div>
+      <div class="tab-button" data-tab="adblock">Ad Blocker</div>
     </div>
-    <textarea id="proxyList" placeholder="Examples:
+    
+    <div class="tab-content active" id="proxy-tab">
+      <h2>Proxy Settings</h2>
+      
+      <div class="section">
+        <h3>Proxy List</h3>	
+        <div class="format-info">
+          <p>Two formats are supported:</p>
+          <p>1. Standard format: <span class="format-example">host:port:username:password</span></p>
+          <p>2. With type specified: <span class="format-example">type:host:port:username:password</span></p>
+          <p class="note">Type can be 'http' or 'socks5'. If not specified, type will be detected automatically.</p>
+        </div>
+        <textarea id="proxyList" placeholder="Examples:
 198.23.239.134:6540:dnrrfarc:cvbnihiajzzt
 http:207.244.217.165:6712:dnrrfarc:cvbnihiajzzt
 socks5:64.137.42.112:1080:dnrrfarc:cvbnihiajzzt"></textarea>
-  </div>
+      </div>
 
-  <div class="radio-group section">
-    <h3>Proxy Mode</h3>
-    <div class="radio-option">
-      <input type="radio" id="proxyOnly" name="proxyMode" value="proxyOnly">
-      <label for="proxyOnly">Proxy ONLY from list</label>
-    </div>
-    <div class="radio-option">
-      <input type="radio" id="proxyExcept" name="proxyMode" value="proxyExcept">
-      <label for="proxyExcept">Proxy all EXCEPT list</label>
-    </div>
-    <div class="radio-option">
-      <input type="radio" id="proxyAll" name="proxyMode" value="proxyAll">
-      <label for="proxyAll">ALL through VPN</label>
-    </div>
-  </div>
+      <div class="radio-group section">
+        <h3>Proxy Mode</h3>
+        <div class="radio-option">
+          <input type="radio" id="proxyOnly" name="proxyMode" value="proxyOnly">
+          <label for="proxyOnly">Proxy ONLY from list</label>
+        </div>
+        <div class="radio-option">
+          <input type="radio" id="proxyExcept" name="proxyMode" value="proxyExcept">
+          <label for="proxyExcept">Proxy all EXCEPT list</label>
+        </div>
+        <div class="radio-option">
+          <input type="radio" id="proxyAll" name="proxyMode" value="proxyAll">
+          <label for="proxyAll">ALL through VPN</label>
+        </div>
+      </div>
 
-  <div class="section">
-    <h3>Domain List</h3>
-    <p>Enter one domain per line:</p>
-    <textarea id="domainList" placeholder="Example:
+      <div class="section">
+        <h3>Domain List</h3>
+        <p>Enter one domain per line:</p>
+        <textarea id="domainList" placeholder="Example:
 mail.ru
 vk.com"></textarea>
 
-    <div class="spoiler">
-      <div class="spoiler-header">
-        Import Ready Lists
-        <span class="spoiler-icon">&#9662;</span>
+        <div class="spoiler">
+          <div class="spoiler-header">
+            Import Ready Lists
+            <span class="spoiler-icon">&#9662;</span>
+          </div>
+          <div class="spoiler-content">
+            <button id="importUaList">Import UA List</button>
+            <button id="importRuList">Import RU List (33000+ domains)</button>
+            <button id="importDomainList">Import from File</button>
+            <button id="exportDomainList">Export to File</button>
+          </div>
+        </div>
       </div>
-      <div class="spoiler-content">
-        <button id="importUaList">Import UA List</button>
-        <button id="importRuList">Import RU List (33000+ domains)</button>
-        <button id="importDomainList">Import from File</button>
-        <button id="exportDomainList">Export to File</button>
+    </div>
+    
+    <div class="tab-content" id="adblock-tab">
+      <h2>Ad Blocker Settings</h2>
+      
+      <div class="section">
+        <h3>Enable Ad Blocking</h3>
+        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+          <label class="toggle-switch">
+            <input type="checkbox" id="adblockToggle">
+            <span class="switch-slider"></span>
+          </label>
+          <span class="toggle-label">Block advertisements</span>
+        </div>
+        <p>When enabled, the extension will block ads on websites you visit.</p>
+        
+        <div class="adblock-stats">
+          <div>
+            <div class="stats-number" id="adblockCounter">0</div>
+            <div class="stats-label">Ads blocked</div>
+          </div>
+          <div>
+            <button class="update-filters" id="updateFilters">Update Filters</button>
+            <button class="reset-stats" id="resetStats">Reset Stats</button>
+          </div>
+        </div>
+        
+        <p class="note">Ad filters are automatically updated every 24 hours.</p>
       </div>
     </div>
   </div>
@@ -205,6 +348,7 @@ vk.com"></textarea>
   <button id="saveSettings">Save Settings</button>
 
   <script src="functions.js"></script>
+  <script src="adblock.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

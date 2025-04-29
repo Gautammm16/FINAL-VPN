@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     const customSelect = document.querySelector('.custom-select');
     const selectedOption = customSelect.querySelector('.selected-option');
     const optionsContainer = customSelect.querySelector('.options-container');
+    const adBlockToggle = document.getElementById('adBlockToggle');
+    const adBlockStats = document.getElementById('adBlockStats');
     const defaultText = 'Select server';
 
     // Initial state
@@ -18,6 +20,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     const proxyList = localStorage.getItem('proxyList') || '';
     const proxyInfoList = JSON.parse(localStorage.getItem('proxyInfoList') || '[]');
     const currentProxyIndex = localStorage.getItem('currentProxyIndex') || '0';
+    
+    // Load ad blocker state
+    const adBlockerEnabled = localStorage.getItem('adBlockerEnabled') === 'true';
+    adBlockToggle.checked = adBlockerEnabled;
+    
+    // Update ad block stats
+    const adsBlocked = localStorage.getItem('adsBlockedCount') || '0';
+    adBlockStats.textContent = `Ads blocked: ${adsBlocked}`;
 
     // Manage promo block visibility
     if (proxyInfoList.length > 0) {
@@ -61,6 +71,26 @@ document.addEventListener('DOMContentLoaded', async function () {
                 updateVPNStatus(true);
             }
         }
+    });
+
+    // Ad Blocker toggle handler
+    adBlockToggle.addEventListener('change', function() {
+        const isEnabled = this.checked;
+        localStorage.setItem('adBlockerEnabled', isEnabled);
+        
+        // Send message to background script to update ad blocking status
+        chrome.runtime.sendMessage({
+            action: 'toggleAdBlocker',
+            enabled: isEnabled
+        });
+        
+        // Show notification
+        chrome.notifications.create({
+            type: 'basic',
+            iconUrl: 'icons/on.png',
+            title: isEnabled ? 'Ad Blocker Enabled' : 'Ad Blocker Disabled',
+            message: isEnabled ? 'Ads will now be blocked' : 'Ads will not be blocked'
+        });
     });
 
     // Format proxy display
@@ -134,16 +164,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (!proxyInfo) return;
 
         const parts = proxyInfo.proxy.split(':');
-        let host, port, user, pass;
+        let host, port, user, pass, type;
 
         if (parts.length === 5) {
-            [, host, port, user, pass] = parts;
+            [type, host, port, user, pass] = parts;
         } else {
             [host, port, user, pass] = parts;
+            type = proxyInfo.type || 'HTTP';
         }
 
         const proxySetting = {
-            'type': proxyInfo.type,
+            'type': type,
             'http_host': host,
             'http_port': port,
             'auth': {
@@ -224,6 +255,24 @@ document.addEventListener('DOMContentLoaded', async function () {
             setIcon('off');
         }
     });
+
+    // Listen for ad block stat updates
+    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        if (request.action === 'updateAdBlockStats') {
+            adBlockStats.textContent = `Ads blocked: ${request.count}`;
+            // Update localStorage for consistency
+            localStorage.setItem('adsBlockedCount', request.count.toString());
+        }
+    });
+
+    // Update ad block stats display
+    function updateAdBlockStats() {
+        const count = localStorage.getItem('adsBlockedCount') || '0';
+        adBlockStats.textContent = `Ads blocked: ${count}`;
+    }
+    
+    // Update ad block stats on popup open
+    updateAdBlockStats();
 
     // Initialize site info
     updateCurrentSite();

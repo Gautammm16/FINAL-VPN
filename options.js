@@ -1,282 +1,285 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // UI Elements
-    const proxyMode = localStorage.getItem('proxyMode') || 'proxyAll';
-    const domainList = localStorage.getItem('domainList') || '';
-    const proxyList = localStorage.getItem('proxyList') || '';
+// document.addEventListener('DOMContentLoaded', function () {
+//     // UI Elements
+//     const proxyMode = localStorage.getItem('proxyMode') || 'proxyAll';
+//     const domainList = localStorage.getItem('domainList') || '';
+//     const proxyList = localStorage.getItem('proxyList') || '';
 
-    // Initialize spoiler functionality
-    document.querySelectorAll('.spoiler-header').forEach(header => {
-        const content = header.nextElementSibling;
-        const icon = header.querySelector('.spoiler-icon');
+//     // Initialize spoiler functionality
+//     document.querySelectorAll('.spoiler-header').forEach(header => {
+//         const content = header.nextElementSibling;
+//         const icon = header.querySelector('.spoiler-icon');
 
-        header.addEventListener('click', () => {
-            const isCollapsed = content.style.display === 'none' || content.style.display === '';
-            content.style.display = isCollapsed ? 'block' : 'none';
-            icon.innerHTML = isCollapsed ? '&#9652;' : '&#9662;';
-        });
-    });
+//         header.addEventListener('click', () => {
+//             const isCollapsed = content.style.display === 'none' || content.style.display === '';
+//             content.style.display = isCollapsed ? 'block' : 'none';
+//             icon.innerHTML = isCollapsed ? '&#9652;' : '&#9662;';
+//         });
+//     });
 
-    // Set values from localStorage
-    document.querySelector(`#${proxyMode}`).checked = true;
-    document.querySelector('#domainList').value = domainList;
-    document.querySelector('#proxyList').value = proxyList;
+//     // Set values from localStorage
+//     document.querySelector(`#${proxyMode}`).checked = true;
+//     document.querySelector('#domainList').value = domainList;
+//     document.querySelector('#proxyList').value = proxyList;
 
-    // Function to determine proxy type
-    async function determineProxyType(proxyStr) {
-        if (proxyStr.toLowerCase().startsWith('socks5:')) return 'SOCKS5';
-        if (proxyStr.toLowerCase().startsWith('http:')) return 'HTTP';
+//     // Function to determine proxy type
+//     async function determineProxyType(proxyStr) {
+//         if (proxyStr.toLowerCase().startsWith('socks5:')) return 'SOCKS5';
+//         if (proxyStr.toLowerCase().startsWith('http:')) return 'HTTP';
 
-        const [host, port] = proxyStr.split(':');
-        const socks5Ports = [1080, 1081, 1085, 9050, 9051];
-        const httpPorts = [3128, 8080, 8081, 80, 8000];
+//         const [host, port] = proxyStr.split(':');
+//         const socks5Ports = [1080, 1081, 1085, 9050, 9051];
+//         const httpPorts = [3128, 8080, 8081, 80, 8000];
 
-        const portNum = parseInt(port);
-        if (socks5Ports.includes(portNum)) return 'SOCKS5';
-        if (httpPorts.includes(portNum)) return 'HTTP';
+//         const portNum = parseInt(port);
+//         if (socks5Ports.includes(portNum)) return 'SOCKS5';
+//         if (httpPorts.includes(portNum)) return 'HTTP';
 
-        return 'HTTP';
-    }
+//         return 'HTTP';
+//     }
 
-    // Helper function to show status badge
-    function showStatusBadge(button, message, type = 'success') {
-        const badge = document.createElement('span');
-        badge.className = `status-badge ${type}`;
-        badge.textContent = message;
-        button.parentNode.appendChild(badge);
-        setTimeout(() => badge.remove(), 3000);
-    }
+//     // Helper function to show status badge
+//     function showStatusBadge(button, message, type = 'success') {
+//         const badge = document.createElement('span');
+//         badge.className = `status-badge ${type}`;
+//         badge.textContent = message;
+//         button.parentNode.appendChild(badge);
+//         setTimeout(() => badge.remove(), 3000);
+//     }
 
-    // Function to get country flag from code
-    function getCountryFlag(countryCode) {
-        if (!countryCode || countryCode.length !== 2) return '';
-        const codePoints = [...countryCode.toUpperCase()].map(char =>
-            127397 + char.charCodeAt(0)
-        );
-        return String.fromCodePoint(...codePoints);
-    }
+//     // Function to get country flag from code
+//     function getCountryFlag(countryCode) {
+//         if (!countryCode || countryCode.length !== 2) return '';
+//         const codePoints = [...countryCode.toUpperCase()].map(char =>
+//             127397 + char.charCodeAt(0)
+//         );
+//         return String.fromCodePoint(...codePoints);
+//     }
 
-    // Get country info based on IP
-    async function getProxyCountryInfo(ip) {
-        try {
-            const response = await fetch(`https://ip2c.org/${ip}`);
-            const data = await response.text();
-            const [status, countryCode] = data.split(';');
-            if (status === '1') {
-                const flag = getCountryFlag(countryCode);
-                return { code: countryCode, flag };
-            }
-            return { code: 'Unknown', flag: '' };
-        } catch (error) {
-            console.error('Error fetching country info:', error);
-            return { code: 'Unknown', flag: '' };
-        }
-    }
+//     // Get country info based on IP
+//     async function getProxyCountryInfo(ip) {
+//         try {
+//             const response = await fetch(`https://ip2c.org/${ip}`);
+//             const data = await response.text();
+//             const [status, countryCode] = data.split(';');
+//             if (status === '1') {
+//                 const flag = getCountryFlag(countryCode);
+//                 return { code: countryCode, flag };
+//             }
+//             return { code: 'Unknown', flag: '' };
+//         } catch (error) {
+//             console.error('Error fetching country info:', error);
+//             return { code: 'Unknown', flag: '' };
+//         }
+//     }
 
-    // Import UA domain list
-    document.getElementById('importUaList').addEventListener('click', async () => {
-        const button = document.getElementById('importUaList');
-        button.disabled = true;
+//     // Import UA domain list
+//     document.getElementById('importUaList').addEventListener('click', async () => {
+//         const button = document.getElementById('importUaList');
+//         button.disabled = true;
 
-        try {
-            const response = await fetch('https://seojacky.github.io/pages/ua-blacklist-domen.txt');
-            if (!response.ok) throw new Error('Network response was not ok');
+//         try {
+//             const response = await fetch('https://seojacky.github.io/pages/ua-blacklist-domen.txt');
+//             if (!response.ok) throw new Error('Network response was not ok');
 
-            const text = await response.text();
-            const domains = text.split('\n').map(domain => domain.trim()).filter(Boolean);
+//             const text = await response.text();
+//             const domains = text.split('\n').map(domain => domain.trim()).filter(Boolean);
 
-            document.getElementById('domainList').value = domains.join('\n');
-            showStatusBadge(button, `Imported ${domains.length} domains`);
-        } catch (error) {
-            console.error('Import error:', error);
-            showStatusBadge(button, 'Import failed', 'error');
-        } finally {
-            button.disabled = false;
-        }
-    });
+//             document.getElementById('domainList').value = domains.join('\n');
+//             showStatusBadge(button, `Imported ${domains.length} domains`);
+//         } catch (error) {
+//             console.error('Import error:', error);
+//             showStatusBadge(button, 'Import failed', 'error');
+//         } finally {
+//             button.disabled = false;
+//         }
+//     });
 
-    // Import RU domain list
-    document.getElementById('importRuList').addEventListener('click', async () => {
-        const button = document.getElementById('importRuList');
-        button.disabled = true;
+//     // Import RU domain list
+//     document.getElementById('importRuList').addEventListener('click', async () => {
+//         const button = document.getElementById('importRuList');
+//         button.disabled = true;
 
-        try {
-            const response = await fetch('https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/outside-raw.lst');
-            if (!response.ok) throw new Error('Network response was not ok');
+//         try {
+//             const response = await fetch('https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/outside-raw.lst');
+//             if (!response.ok) throw new Error('Network response was not ok');
 
-            const text = await response.text();
-            const domains = text.split('\n').map(domain => domain.trim()).filter(Boolean);
+//             const text = await response.text();
+//             const domains = text.split('\n').map(domain => domain.trim()).filter(Boolean);
 
-            document.getElementById('domainList').value = domains.join('\n');
-            showStatusBadge(button, `Imported ${domains.length} domains`);
-        } catch (error) {
-            console.error('Import error:', error);
-            showStatusBadge(button, 'Import failed', 'error');
-        } finally {
-            button.disabled = false;
-        }
-    });
+//             document.getElementById('domainList').value = domains.join('\n');
+//             showStatusBadge(button, `Imported ${domains.length} domains`);
+//         } catch (error) {
+//             console.error('Import error:', error);
+//             showStatusBadge(button, 'Import failed', 'error');
+//         } finally {
+//             button.disabled = false;
+//         }
+//     });
 
-    // Import from local file
-    document.getElementById('importDomainList').addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.txt';
+//     // Import from local file
+//     document.getElementById('importDomainList').addEventListener('click', () => {
+//         const input = document.createElement('input');
+//         input.type = 'file';
+//         input.accept = '.txt';
 
-        input.onchange = e => {
-            const file = e.target.files[0];
-            if (!file) return;
+//         input.onchange = e => {
+//             const file = e.target.files[0];
+//             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = event => {
-                const domains = event.target.result
-                    .split('\n')
-                    .map(domain => domain.trim())
-                    .filter(Boolean);
+//             const reader = new FileReader();
+//             reader.onload = event => {
+//                 const domains = event.target.result
+//                     .split('\n')
+//                     .map(domain => domain.trim())
+//                     .filter(Boolean);
 
-                document.getElementById('domainList').value = domains.join('\n');
-                showStatusBadge(document.getElementById('importDomainList'),
-                    `Imported ${domains.length} domains`);
-            };
+//                 document.getElementById('domainList').value = domains.join('\n');
+//                 showStatusBadge(document.getElementById('importDomainList'),
+//                     `Imported ${domains.length} domains`);
+//             };
 
-            reader.onerror = () => {
-                showStatusBadge(document.getElementById('importDomainList'),
-                    'Failed to read file', 'error');
-            };
+//             reader.onerror = () => {
+//                 showStatusBadge(document.getElementById('importDomainList'),
+//                     'Failed to read file', 'error');
+//             };
 
-            reader.readAsText(file);
-        };
+//             reader.readAsText(file);
+//         };
 
-        input.click();
-    });
+//         input.click();
+//     });
 
-    // Export to local file
-    document.getElementById('exportDomainList').addEventListener('click', () => {
-        const domains = document.getElementById('domainList').value;
-        if (!domains.trim()) {
-            showStatusBadge(document.getElementById('exportDomainList'),
-                'No domains to export', 'error');
-            return;
-        }
+//     // Export to local file
+//     document.getElementById('exportDomainList').addEventListener('click', () => {
+//         const domains = document.getElementById('domainList').value;
+//         if (!domains.trim()) {
+//             showStatusBadge(document.getElementById('exportDomainList'),
+//                 'No domains to export', 'error');
+//             return;
+//         }
 
-        const blob = new Blob([domains], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'domain-list.txt';
-        a.click();
-        URL.revokeObjectURL(url);
+//         const blob = new Blob([domains], { type: 'text/plain' });
+//         const url = URL.createObjectURL(blob);
+//         const a = document.createElement('a');
+//         a.href = url;
+//         a.download = 'domain-list.txt';
+//         a.click();
+//         URL.revokeObjectURL(url);
 
-        const domainCount = domains.split('\n').filter(Boolean).length;
-        showStatusBadge(document.getElementById('exportDomainList'),
-            `Exported ${domainCount} domains`);
-    });
+//         const domainCount = domains.split('\n').filter(Boolean).length;
+//         showStatusBadge(document.getElementById('exportDomainList'),
+//             `Exported ${domainCount} domains`);
+//     });
 
-    // Set button loading state
-    function setButtonLoading(button, isLoading) {
-        button.disabled = isLoading;
-        if (isLoading) {
-            button.textContent = 'Saving...';
-            button.style.opacity = '0.7';
-        } else {
-            button.textContent = 'Save Settings';
-            button.style.opacity = '1';
-        }
-    }
+//     // Set button loading state
+//     function setButtonLoading(button, isLoading) {
+//         button.disabled = isLoading;
+//         if (isLoading) {
+//             button.textContent = 'Saving...';
+//             button.style.opacity = '0.7';
+//         } else {
+//             button.textContent = 'Save Settings';
+//             button.style.opacity = '1';
+//         }
+//     }
 
-    // Radio button change events
-    document.querySelectorAll('input[name="proxyMode"]').forEach(radio => {
-        radio.addEventListener('change', function () {
-            const domainListTextarea = document.querySelector('#domainList');
-            if (this.value === 'proxyAll') {
-                domainListTextarea.disabled = true;
-                domainListTextarea.style.opacity = '0.5';
-            } else {
-                domainListTextarea.disabled = false;
-                domainListTextarea.style.opacity = '1';
-            }
-        });
-    });
+//     // Radio button change events
+//     document.querySelectorAll('input[name="proxyMode"]').forEach(radio => {
+//         radio.addEventListener('change', function () {
+//             const domainListTextarea = document.querySelector('#domainList');
+//             if (this.value === 'proxyAll') {
+//                 domainListTextarea.disabled = true;
+//                 domainListTextarea.style.opacity = '0.5';
+//             } else {
+//                 domainListTextarea.disabled = false;
+//                 domainListTextarea.style.opacity = '1';
+//             }
+//         });
+//     });
 
-    // Initialize domain list input state
-    const initialMode = document.querySelector('input[name="proxyMode"]:checked').value;
-    const domainListTextarea = document.querySelector('#domainList');
-    if (initialMode === 'proxyAll') {
-        domainListTextarea.disabled = true;
-        domainListTextarea.style.opacity = '0.5';
-    }
+//     // Initialize domain list input state
+//     const initialMode = document.querySelector('input[name="proxyMode"]:checked').value;
+//     const domainListTextarea = document.querySelector('#domainList');
+//     if (initialMode === 'proxyAll') {
+//         domainListTextarea.disabled = true;
+//         domainListTextarea.style.opacity = '0.5';
+//     }
 
-    // Save settings handler
-    document.querySelector('#saveSettings').addEventListener('click', async function () {
-        const saveButton = this;
-        setButtonLoading(saveButton, true);
+//     // Save settings handler
+//     document.querySelector('#saveSettings').addEventListener('click', async function () {
+//         const saveButton = this;
+//         setButtonLoading(saveButton, true);
 
-        try {
-            const mode = document.querySelector('input[name="proxyMode"]:checked').value;
-            const domains = document.querySelector('#domainList').value.trim();
-            const proxies = document.querySelector('#proxyList').value.trim();
+//         try {
+//             const mode = document.querySelector('input[name="proxyMode"]:checked').value;
+//             const domains = document.querySelector('#domainList').value.trim();
+//             const proxies = document.querySelector('#proxyList').value.trim();
 
-            // Validate proxy list
-            const proxyLines = proxies.split('\n').filter(line => line.trim());
-            const validProxies = proxyLines.every(line => {
-                const parts = line.split(':');
-                return parts.length === 4 || (parts.length === 5 &&
-                    (parts[0].toLowerCase() === 'http' || parts[0].toLowerCase() === 'socks5'));
-            });
+//             // Validate proxy list
+//             const proxyLines = proxies.split('\n').filter(line => line.trim());
+//             const validProxies = proxyLines.every(line => {
+//                 const parts = line.split(':');
+//                 return parts.length === 4 || (parts.length === 5 &&
+//                     (parts[0].toLowerCase() === 'http' || parts[0].toLowerCase() === 'socks5'));
+//             });
 
-            if (!validProxies) {
-                alert('Invalid proxy format! Please use:\nhost:port:username:password\nor\ntype:host:port:username:password');
-                return;
-            }
+//             if (!validProxies) {
+//                 alert('Invalid proxy format! Please use:\nhost:port:username:password\nor\ntype:host:port:username:password');
+//                 return;
+//             }
 
-            // Fetch country info and proxy type for each proxy
-            console.log('Getting proxy information...');
-            const proxyInfoList = await Promise.all(proxyLines.map(async (proxyStr) => {
-                const parts = proxyStr.split(':');
-                const host = parts.length === 5 ? parts[1] : parts[0];
+//             // Fetch country info and proxy type for each proxy
+//             console.log('Getting proxy information...');
+//             const proxyInfoList = await Promise.all(proxyLines.map(async (proxyStr) => {
+//                 const parts = proxyStr.split(':');
+//                 const host = parts.length === 5 ? parts[1] : parts[0];
 
-                console.log(`Checking proxy ${host}...`);
+//                 console.log(`Checking proxy ${host}...`);
 
-                const [countryInfo, proxyType] = await Promise.all([
-                    getProxyCountryInfo(host),
-                    determineProxyType(proxyStr)
-                ]);
+//                 const [countryInfo, proxyType] = await Promise.all([
+//                     getProxyCountryInfo(host),
+//                     determineProxyType(proxyStr)
+//                 ]);
 
-                return {
-                    proxy: proxyStr,
-                    countryInfo,
-                    type: proxyType
-                };
-            }));
+//                 return {
+//                     proxy: proxyStr,
+//                     countryInfo,
+//                     type: proxyType
+//                 };
+//             }));
 
-            // Save settings to localStorage
-            localStorage.setItem('proxyMode', mode);
-            localStorage.setItem('domainList', domains);
-            localStorage.setItem('proxyList', proxies);
-            localStorage.setItem('proxyInfoList', JSON.stringify(proxyInfoList));
+//             // Save settings to localStorage
+//             localStorage.setItem('proxyMode', mode);
+//             localStorage.setItem('domainList', domains);
+//             localStorage.setItem('proxyList', proxies);
+//             localStorage.setItem('proxyInfoList', JSON.stringify(proxyInfoList));
 
-            // Save first proxy as active setting
-            if (proxyLines.length > 0) {
-                const firstProxy = proxyLines[0];
-                const parts = firstProxy.split(':');
-                const [host, port, user, pass] = parts.length === 5 ? parts.slice(1) : parts;
+//             // Save first proxy as active setting
+//             if (proxyLines.length > 0) {
+//                 const firstProxy = proxyLines[0];
+//                 const parts = firstProxy.split(':');
+//                 const [host, port, user, pass] = parts.length === 5 ? parts.slice(1) : parts;
 
-                const proxySetting = {
-                    type: proxyInfoList[0].type,
-                    http_host: host,
-                    http_port: port,
-                    auth: {
-                        enable: true,
-                        user: user,
-                        pass: pass
-                    }
-                };
-                localStorage.setItem('proxySetting', JSON.stringify(proxySetting));
-            }
+//                 const proxySetting = {
+//                     type: proxyInfoList[0].type,
+//                     http_host: host,
+//                     http_port: port,
+//                     auth: {
+//                         enable: true,
+//                         user: user,
+//                         pass: pass
+//                     }
+//                 };
+//                 localStorage.setItem('proxySetting', JSON.stringify(proxySetting));
+//             }
 
-            // (Continue your logic for proxy enable/disable here...)
+//             // (Continue your logic for proxy enable/disable here...)
 
-        } finally {
-            setButtonLoading(saveButton, false);
-        }
-    });
-});
+//         } finally {
+//             setButtonLoading(saveButton, false);
+//         }
+//     });
+// });
+
+
+
